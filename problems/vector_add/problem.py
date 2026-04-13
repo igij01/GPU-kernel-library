@@ -1,13 +1,19 @@
 """VectorAdd problem — element-wise addition of two vectors.
 
 Reference implementation uses PyTorch's built-in addition.
+Registering with @Registry.problem at import time.
 """
 
 import torch
 
+import kernel_pipeline_backend.backends.cuda    # noqa: F401 — registers CUDA backend
+import kernel_pipeline_backend.backends.triton  # noqa: F401 — registers Triton backend
+
 from kernel_pipeline_backend.problem import rand_tensor
+from kernel_pipeline_backend.registry import Registry
 
 
+@Registry.problem("vector_add")
 class VectorAddProblem:
     """C = A + B for 1-D float32 vectors."""
 
