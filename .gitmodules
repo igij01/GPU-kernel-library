@@ -1,0 +1,6 @@
+[submodule "unified-kernel-framework-backend"]
+	path = unified-kernel-framework-backend
+	url = https://github.com/igij01/unified-kernel-framework-backend.git
+[submodule "cuda_docker_env"]
+	path = cuda_docker_env
+	url = https://github.com/igij01/cuda_docker_env.git
