@@ -44,14 +44,16 @@ def _print_result(result) -> None:
 
     if pr.autotuned:
         print("  Best configs:")
-        by_size: dict[int, tuple[float, KernelConfig]] = {}
+        by_size: dict[tuple, tuple[float, KernelConfig]] = {}
         for ar in pr.autotuned:
-            n = ar.point.sizes["N"]
-            if n not in by_size or ar.time_ms < by_size[n][0]:
-                by_size[n] = (ar.time_ms, ar.point.config)
-        for n in sorted(by_size):
-            time_ms, cfg = by_size[n]
-            print(f"    N={n:>8d}: {time_ms:.4f} ms  BLOCK_SIZE={cfg.params['BLOCK_SIZE']}")
+            key = tuple(sorted(ar.point.sizes.items()))
+            if key not in by_size or ar.time_ms < by_size[key][0]:
+                by_size[key] = (ar.time_ms, ar.point.config)
+        for key in sorted(by_size):
+            time_ms, cfg = by_size[key]
+            sizes_str = ", ".join(f"{k}={v}" for k, v in key)
+            cfg_str = ", ".join(f"{k}={v}" for k, v in sorted(cfg.params.items()))
+            print(f"    {sizes_str}: {time_ms:.4f} ms  {cfg_str}")
     print()
 
 
