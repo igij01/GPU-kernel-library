@@ -16,7 +16,7 @@ from kernel_pipeline_backend.core.types import CUDAArch, GridResult, KernelConfi
 from kernel_pipeline_backend.registry import Registry
 
 _BLOCK_SIZES = [16, 32, 64, 128]
-_TARGET_ARCHS = [CUDAArch.SM_120]
+_TARGET_ARCHS = [CUDAArch.COMPUTE_80]
 
 # Fixed head dimension — must match D in problem sizes.
 # Must be a tl.constexpr so it is accessible inside @triton.jit kernels.

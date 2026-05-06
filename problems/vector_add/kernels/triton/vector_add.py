@@ -9,7 +9,7 @@ from kernel_pipeline_backend.core.types import CUDAArch, GridResult, KernelConfi
 from kernel_pipeline_backend.registry import Registry
 
 _BLOCK_SIZES = [64, 128, 256, 512, 1024]
-_TARGET_ARCHS = [CUDAArch.SM_120]
+_TARGET_ARCHS = [CUDAArch.COMPUTE_80]
 
 
 def _grid(sizes: dict[str, int], config: KernelConfig) -> GridResult:

@@ -16,7 +16,7 @@ from pathlib import Path
 from kernel_pipeline_backend.core.types import CUDAArch, GridResult, KernelConfig
 from kernel_pipeline_backend.registry import Registry
 
-_TARGET_ARCHS = [CUDAArch.SM_120]
+_TARGET_ARCHS = [CUDAArch.COMPUTE_80]
 
 _source_core   = (Path(__file__).parent / "matmul_core.cu").read_text()
 _source_tensor = (Path(__file__).parent / "matmul_tensor_core.cu").read_text()
