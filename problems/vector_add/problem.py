@@ -20,15 +20,20 @@ class VectorAddProblem:
     sizes = {
         "N": [1024, 4096, 16384, 65536, 262144, 1048576],
     }
-    dtypes = [torch.float32, torch.float32]
+    dtypes = [torch.float32]
     atol = 1e-5
     rtol = 1e-5
 
-    def initialize(self, sizes: dict[str, int]) -> list[torch.Tensor]:
+    def initialize(
+        self,
+        sizes: dict[str, int],
+        dtype: torch.dtype | None = None,
+    ) -> list[torch.Tensor]:
+        dtype = dtype or torch.float32
         N = sizes["N"]
-        A = rand_tensor(N, dtype=self.dtypes[0], device="cuda")
-        B = rand_tensor(N, dtype=self.dtypes[1], device="cuda")
-        C = torch.empty(N, dtype=self.dtypes[0], device="cuda")
+        A = rand_tensor(N, dtype=dtype, device="cuda")
+        B = rand_tensor(N, dtype=dtype, device="cuda")
+        C = torch.empty(N, dtype=dtype, device="cuda")
         return [A, B, C]
 
     def reference(

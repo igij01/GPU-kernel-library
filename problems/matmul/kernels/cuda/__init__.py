@@ -51,6 +51,7 @@ def _grid_tensor_core(sizes: dict[str, int], config: KernelConfig) -> GridResult
 
 # CUDA core: tile sizes 16 and 32.
 # (32×32 = 1024 threads/block — the per-block limit.)
+# InputT is a type template parameter bound to the problem's dtype sweep.
 Registry.register_kernel(
     "matmul_cuda_core",
     source=_source_core,
@@ -59,14 +60,18 @@ Registry.register_kernel(
     grid_generator=_grid_core,
     compile_flags={
         "entry_point": "matmul_core",
+        "template_params": ["BLOCK_SIZE", "InputT"],
+        "type_params": ["InputT"],
         "config_space": {"BLOCK_SIZE": [16, 32]},
     },
     problem="matmul",
     runtime_args=["M", "N", "K"],
+    type_args=["InputT"],
 )
 
 # Tensor core: tile sizes 16, 32, 64.
 # Threads/block: 32, 128, 512 respectively — all within limits.
+# InputT is a type template parameter bound to the problem's dtype sweep.
 Registry.register_kernel(
     "matmul_tensor_core",
     source=_source_tensor,
@@ -75,8 +80,11 @@ Registry.register_kernel(
     grid_generator=_grid_tensor_core,
     compile_flags={
         "entry_point": "matmul_tensor_core",
+        "template_params": ["BLOCK_SIZE", "InputT"],
+        "type_params": ["InputT"],
         "config_space": {"BLOCK_SIZE": [16, 32, 64]},
     },
     problem="matmul",
     runtime_args=["M", "N", "K"],
+    type_args=["InputT"],
 )

@@ -32,12 +32,17 @@ class SelfAttentionProblem:
     atol = 1e-3
     rtol = 1e-3
 
-    def initialize(self, sizes: dict[str, int]) -> list[torch.Tensor]:
+    def initialize(
+        self,
+        sizes: dict[str, int],
+        dtype: torch.dtype | None = None,
+    ) -> list[torch.Tensor]:
+        dtype = dtype or torch.float32
         S, D = sizes["S"], sizes["D"]
-        Q = rand_tensor(S, D, dtype=torch.float32, device="cuda")
-        K = rand_tensor(S, D, dtype=torch.float32, device="cuda")
-        V = rand_tensor(S, D, dtype=torch.float32, device="cuda")
-        O = torch.empty((S, D), dtype=torch.float32, device="cuda")
+        Q = rand_tensor(S, D, dtype=dtype, device="cuda")
+        K = rand_tensor(S, D, dtype=dtype, device="cuda")
+        V = rand_tensor(S, D, dtype=dtype, device="cuda")
+        O = torch.empty((S, D), dtype=dtype, device="cuda")
         return [Q, K, V, O]
 
     def reference(

@@ -1,13 +1,16 @@
 // matmul_core.cu — Tiled matrix multiplication using shared memory.
 //
-// C = A @ B   A:(M,K) fp16, B:(K,N) fp16 → C:(M,N) fp32
+// C = A @ B   A:(M,K) InputT, B:(K,N) InputT → C:(M,N) AccT
 //
 // Design: C++ templates instead of macros.
-//   - matmul_core_impl<TILE> is a __device__ function templated on the
-//     shared-memory tile size.
+//   - matmul_core_impl<TILE, InputT, AccT> is a __device__ function templated
+//     on the tile size and on the input / accumulator element types.
+//   - Inputs are loaded and cast to AccT before entering shared memory, so
+//     the accumulation loop always runs in AccT precision.
 //   - The extern "C" __global__ entry point matmul_core() instantiates the
-//     template using BLOCK_SIZE, which is injected at compile time via
-//     -DBLOCK_SIZE=<value>.  No preprocessor macros are used for the tile.
+//     template with BLOCK_SIZE (injected via -DBLOCK_SIZE=<value>) and the
+//     concrete types __half / float.  No preprocessor macros are used for
+//     the tile size or the types.
 //
 // Thread layout: blockDim = (BLOCK_SIZE, BLOCK_SIZE).
 // Grid layout  : (ceil(N/BLOCK_SIZE), ceil(M/BLOCK_SIZE)).
@@ -18,19 +21,21 @@
 // Templated implementation (device-side, not callable as a kernel)
 // ---------------------------------------------------------------------------
 
-template <int TILE>
+template <int TILE, typename InputT, typename AccT>
 __device__ void matmul_core_impl(
-    const __half* __restrict__ A,   // (M, K) row-major
-    const __half* __restrict__ B,   // (K, N) row-major
-    float*        __restrict__ C,   // (M, N) row-major
+    const InputT* __restrict__ A,   // (M, K) row-major
+    const InputT* __restrict__ B,   // (K, N) row-major
+    AccT*         __restrict__ C,   // (M, N) row-major
     int M, int N, int K
 ) {
-    __shared__ float sA[TILE][TILE];
-    __shared__ float sB[TILE][TILE];
+    // Shared-memory tiles hold values already promoted to AccT, so the
+    // inner dot-product accumulates entirely in AccT precision.
+    __shared__ AccT sA[TILE][TILE];
+    __shared__ AccT sB[TILE][TILE];
 
     const int row = blockIdx.y * TILE + threadIdx.y;
     const int col = blockIdx.x * TILE + threadIdx.x;
-    float acc = 0.0f;
+    AccT acc = AccT(0);
 
     // Sweep over K-tiles.  Each iteration loads one (TILE×TILE) strip of A
     // and one (TILE×TILE) strip of B into shared memory.
@@ -38,10 +43,11 @@ __device__ void matmul_core_impl(
         const int a_col = t * TILE + threadIdx.x;
         const int b_row = t * TILE + threadIdx.y;
 
+        // static_cast handles InputT → AccT (e.g. __half → float).
         sA[threadIdx.y][threadIdx.x] = (row < M && a_col < K)
-            ? __half2float(A[row * K + a_col]) : 0.0f;
+            ? static_cast<AccT>(A[row * K + a_col]) : AccT(0);
         sB[threadIdx.y][threadIdx.x] = (b_row < K && col < N)
-            ? __half2float(B[b_row * N + col]) : 0.0f;
+            ? static_cast<AccT>(B[b_row * N + col]) : AccT(0);
         __syncthreads();
 
         #pragma unroll
@@ -55,15 +61,24 @@ __device__ void matmul_core_impl(
 }
 
 // ---------------------------------------------------------------------------
-// extern "C" entry point — instantiates the template with the compile-time
-// BLOCK_SIZE value.  The framework passes BLOCK_SIZE via -DBLOCK_SIZE=<N>.
+// Template entry point — instantiated by CuPy's name-expression mechanism.
+//
+// Template parameters:
+//   TILE    — tile/block size (integer, from config_space)
+//   InputT  — input element type (mapped from problem dtype via type_args)
+//
+// The accumulator type is always float (fp32).  Mixed input/output type
+// support (e.g. fp16 input → fp32 accumulation) is the common case for
+// matmul; AccT is not exposed as a template parameter because the framework's
+// type_args binds all listed params to a single dtype.
 // ---------------------------------------------------------------------------
 
-extern "C" __global__ void matmul_core(
-    const __half* A,
-    const __half* B,
-    float*        C,
+template <int TILE, typename InputT>
+__global__ void matmul_core(
+    const InputT* __restrict__ A,
+    const InputT* __restrict__ B,
+    float*        __restrict__ C,
     int M, int N, int K
 ) {
-    matmul_core_impl<BLOCK_SIZE>(A, B, C, M, N, K);
+    matmul_core_impl<TILE, InputT, float>(A, B, C, M, N, K);
 }
