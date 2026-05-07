@@ -29,7 +29,7 @@ class MatMulProblem:
         "K": [128, 256],
     }
     # Sweep over input precisions; output is always fp32.
-    dtypes = [torch.float16]
+    dtypes = [{"Input": torch.float16}]
     # fp16 → fp32 accumulated matmul; allow a little slack against the
     # pure-fp32 reference.
     atol = 0.05
@@ -38,9 +38,9 @@ class MatMulProblem:
     def initialize(
         self,
         sizes: dict[str, int],
-        dtype: torch.dtype | None = None,
+        dtypes: dict[str, torch.dtype],
     ) -> list[torch.Tensor]:
-        dtype = dtype or torch.float16
+        dtype = dtypes["Input"]
         M, N, K = sizes["M"], sizes["N"], sizes["K"]
         A = rand_tensor(M, K, dtype=dtype, device="cuda")
         B = rand_tensor(K, N, dtype=dtype, device="cuda")
@@ -51,6 +51,7 @@ class MatMulProblem:
         self,
         inputs: list[torch.Tensor],
         sizes: dict[str, int],
+        dtypes: dict[str, torch.dtype],
     ) -> list[torch.Tensor]:
         A, B, _C = inputs
         # Up-cast to float32 so the reference isn't subject to rounding.

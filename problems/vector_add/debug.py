@@ -24,6 +24,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # Register vector_add problem and both kernels
+import torch  # noqa: E402
+
 import problems.vector_add  # noqa: F401, E402
 
 from kernel_pipeline_backend.core.types import KernelConfig, SearchPoint
@@ -80,6 +82,7 @@ async def _run(kernel_name: str, N: int, block_size: int, verify: bool, profile:
     point = SearchPoint(
         sizes={"N": N},
         config=KernelConfig(params={"BLOCK_SIZE": block_size}),
+        dtypes={"T": torch.float32},
     )
     print(f"Running single-point debug for '{kernel_name}'...")
     result = await service.run_point(kernel_name, point, verify=verify, profile=profile)

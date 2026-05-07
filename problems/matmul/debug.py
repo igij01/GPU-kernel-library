@@ -30,6 +30,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # Register the matmul problem and all three kernels.
+import torch  # noqa: E402
+
 import problems.matmul  # noqa: F401, E402
 
 from kernel_pipeline_backend.core.types import KernelConfig, SearchPoint  # noqa: E402
@@ -99,6 +101,7 @@ async def _run(
     point = SearchPoint(
         sizes=sizes,
         config=KernelConfig(params=config_params),
+        dtypes={"Input": torch.float16},
     )
     print(f"Running single-point debug for '{kernel_name}'...")
     result = await service.run_point(kernel_name, point, verify=verify, profile=profile)

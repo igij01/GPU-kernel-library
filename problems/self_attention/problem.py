@@ -27,7 +27,7 @@ class SelfAttentionProblem:
         "S": [64, 128, 256, 512],
         "D": [64],
     }
-    dtypes = [torch.float32]
+    dtypes = [{"T": torch.float32}]
     # Softmax + floating-point reductions accumulate more error than simple add
     atol = 1e-3
     rtol = 1e-3
@@ -35,9 +35,9 @@ class SelfAttentionProblem:
     def initialize(
         self,
         sizes: dict[str, int],
-        dtype: torch.dtype | None = None,
+        dtypes: dict[str, torch.dtype],
     ) -> list[torch.Tensor]:
-        dtype = dtype or torch.float32
+        dtype = dtypes["T"]
         S, D = sizes["S"], sizes["D"]
         Q = rand_tensor(S, D, dtype=dtype, device="cuda")
         K = rand_tensor(S, D, dtype=dtype, device="cuda")
@@ -49,6 +49,7 @@ class SelfAttentionProblem:
         self,
         inputs: list[torch.Tensor],
         sizes: dict[str, int],
+        dtypes: dict[str, torch.dtype],
     ) -> list[torch.Tensor]:
         Q, K, V, _O = inputs
         # sdpa expects (batch, heads, seq, dim); use batch=heads=1

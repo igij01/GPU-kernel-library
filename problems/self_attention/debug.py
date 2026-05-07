@@ -23,6 +23,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
 # Register self_attention problem and both kernels
+import torch  # noqa: E402
+
 import problems.self_attention  # noqa: F401, E402
 
 from kernel_pipeline_backend.core.types import KernelConfig, SearchPoint
@@ -88,6 +90,7 @@ async def _run(
     point = SearchPoint(
         sizes={"S": S, "D": D},
         config=KernelConfig(params={param_key: block_size}),
+        dtypes={"T": torch.float32},
     )
     print(f"Running single-point debug for '{kernel_name}'...")
     result = await service.run_point(kernel_name, point, verify=verify, profile=profile)

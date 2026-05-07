@@ -61,12 +61,11 @@ Registry.register_kernel(
     compile_flags={
         "entry_point": "matmul_core",
         "template_params": ["BLOCK_SIZE", "InputT"],
-        "type_params": ["InputT"],
-        "config_space": {"BLOCK_SIZE": [16, 32]},
+        "config_space":{"BLOCK_SIZE": [16, 32]},
     },
     problem="matmul",
     runtime_args=["M", "N", "K"],
-    type_args=["InputT"],
+    type_args={"InputT": "Input"},
 )
 
 # Tensor core: tile sizes 16, 32, 64.
@@ -81,10 +80,9 @@ Registry.register_kernel(
     compile_flags={
         "entry_point": "matmul_tensor_core",
         "template_params": ["BLOCK_SIZE", "InputT"],
-        "type_params": ["InputT"],
-        "config_space": {"BLOCK_SIZE": [16, 32, 64]},
+        "config_space":{"BLOCK_SIZE": [16, 32, 64]},
     },
     problem="matmul",
     runtime_args=["M", "N", "K"],
-    type_args=["InputT"],
+    type_args={"InputT": "Input"},
 )
